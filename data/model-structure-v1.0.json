@@ -1,0 +1,186 @@
+{
+  "base_package": "vf.favor",
+  "classes": {
+    "relationship": [
+      {
+        "name": "Relationship",
+        "doc": "Represents an established relationship between two users",
+        "properties": [
+          {
+            "name": "firstUserId",
+            "references": "user",
+            "doc": "Refers to a party in this relationship"
+          },
+          {
+            "name": "secondUserId",
+            "references": "user",
+            "doc": "Refers to another party in this relationship"
+          },
+          {
+            "name": "currentFavor",
+            "type": "Int",
+            "doc": "The current amount of user1's cumulated favor to user2. Sign determines direction.",
+            "usage": "Multiply by -1 in order to get user2's favor for user1"
+          },
+          {
+            "type": "creation",
+            "doc": "Time when this relationship was started"
+          }
+        ]
+      },
+      {
+        "name": "trustState",
+        "doc": "Used for storing people's trust levels with each other (including history)",
+        "properties": [
+          {
+            "references": "user",
+            "doc": "Id of the user who trusts"
+          },
+          {
+            "name": "trustedId",
+            "references": "user",
+            "doc": "Id of the user being trusted"
+          },
+          {
+            "name": "trustLevel",
+            "type": "Int",
+            "doc": "The level of trust"
+          },
+          {
+            "type": "creation"
+          },
+          {
+            "type": "deprecation"
+          }
+        ]
+      },
+      {
+        "name": "FavorEvent",
+        "doc": "Represents a recognized event where a user performs a favor to another user",
+        "properties": [
+          {
+            "name": "granterId",
+            "references": "user",
+            "doc": "Id of the user who acknowledges / received the favor"
+          },
+          {
+            "name": "recipientId",
+            "references": "user",
+            "doc": "Id of the user for whom the favor is granted / who performed the favor"
+          },
+          {
+            "name": "title",
+            "type": "Option[String]",
+            "doc": "Title of this favor"
+          },
+          {
+            "name": "description",
+            "type": "Option[String]",
+            "length": 1048,
+            "doc": "More detailed description of this favor"
+          },
+          {
+            "type": "creation",
+            "doc": "Time when this favor was recognized"
+          }
+        ]
+      }
+    ],
+    "communication": [
+      {
+        "name": "Mask",
+        "doc": "Represents a codename used for a user when trust level doesn't allow use of real identities",
+        "properties": [
+          {
+            "name": "ownerId",
+            "references": "user",
+            "doc": "Id of the user who uses this mask / alias"
+          },
+          {
+            "name": "name",
+            "doc": "Alias used as the mask"
+          },
+          {
+            "name": "forUserId",
+            "type": "Option[Int]",
+            "references": "user",
+            "doc": "Id of the user who sees this mask. None before used."
+          },
+          {
+            "name": "used",
+            "type": "Option[Datetime]",
+            "doc": "Time when this mask was first used"
+          }
+        ]
+      },
+      {
+        "name": "Message",
+        "doc": "Represents a message from one user to another",
+        "properties": [
+          {
+            "name": "senderId",
+            "references": "user",
+            "doc": "Id of the user who sent this message"
+          },
+          {
+            "name": "recipientId",
+            "references": "user",
+            "doc": "Id of the user who received this message"
+          },
+          {
+            "name": "text",
+            "length": 1048,
+            "doc": "Message content"
+          },
+          {
+            "type": "creation",
+            "doc": "Time when this message was sent"
+          }
+        ]
+      },
+      {
+        "name": "Recommendation",
+        "doc": "Represents a recommendation given by a user in order to introduce another user to a third party",
+        "properties": [
+          {
+            "name": "senderId",
+            "references": "user",
+            "doc": "Id of the user doing the recommending"
+          },
+          {
+            "name": "recipientId",
+            "references": "user",
+            "doc": "Id of the user receiving the recommendation"
+          },
+          {
+            "name": "recommendedId",
+            "references": "user",
+            "doc": "Id of the user being recommended"
+          },
+          {
+            "type": "creation",
+            "doc": "Time when this recommendation was sent"
+          }
+        ]
+      },
+      {
+        "name": "RecommendationResponse",
+        "doc": "Records the response given by the recommendation recipient",
+        "properties": [
+          {
+            "references": "recommendation",
+            "doc": "Id of the recommendation this response is for"
+          },
+          {
+            "name": "newTrustLevel",
+            "type": "Option[Int]",
+            "doc": "Granted level of trust from the person receiving the recommendation. None if no trust was granted."
+          },
+          {
+            "type": "creation"
+          }
+        ]
+      }
+    ]
+  }
+}
