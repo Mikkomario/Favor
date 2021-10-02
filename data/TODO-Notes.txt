@@ -1,0 +1,4 @@
+Features / Things to add / remember in this project
+---------------------------------------------------
+
+Should add average favor and perhaps median favor -properties to favor status object

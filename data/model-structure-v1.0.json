@@ -1,26 +1,66 @@
 {
-  "base_package": "vf.favor",
+  "author": "Mikko Hilpinen",
+  "package": "vf.favor",
+  "enums": {
+    "TrustLevel": ["Broken", "Suspicious", "Cautious", "Open", "Transparent", "Positive", "Deep"]
+  },
   "classes": {
+    "user": [
+      {
+        "name": "FavorStatus",
+        "doc": "Saves an user's cumulative favor status summaries (with history)",
+        "props": [
+          {
+            "ref": "user"
+          },
+          {
+            "name": "favorGiven",
+            "name_plural": "favorGiven",
+            "type": "int",
+            "doc": "Total amount of favor given by this user throughout history"
+          },
+          {
+            "name": "favorReceived",
+            "name_plural": "favorReceived",
+            "type": "int",
+            "doc": "Total amount of favor received by this user from any other user throughout history"
+          },
+          {
+            "name": "favorCirculated",
+            "name_plural": "favorCirculated",
+            "type": "int",
+            "doc": "The amount of given favor received back throughout history"
+          },
+          {
+            "type": "creation",
+            "doc": "Time when this status was registered"
+          },
+          {
+            "type": "deprecation",
+            "doc": "Time when this status was replaced with a newer version"
+          }
+        ]
+      }
+    ],
     "relationship": [
       {
         "name": "Relationship",
-        "doc": "Represents an established relationship between two users",
+        "doc": "Represents an established (directional) relationship between two users.",
         "properties": [
           {
-            "name": "firstUserId",
-            "references": "user",
-            "doc": "Refers to a party in this relationship"
+            "ref": "user",
+            "doc": "Id of the primary user"
           },
           {
-            "name": "secondUserId",
+            "name": "targetUserId",
             "references": "user",
-            "doc": "Refers to another party in this relationship"
+            "doc": "Id of the user the primary user has a relationship with"
           },
           {
             "name": "currentFavor",
+            "name_plural": "currentFavor",
             "type": "Int",
-            "doc": "The current amount of user1's cumulated favor to user2. Sign determines direction.",
-            "usage": "Multiply by -1 in order to get user2's favor for user1"
+            "doc": "The primary user's favor towards the target user (cumulative)"
           },
           {
             "type": "creation",
@@ -29,22 +69,24 @@
         ]
       },
       {
-        "name": "trustState",
-        "doc": "Used for storing people's trust levels with each other (including history)",
+        "name": "RelationshipState",
+        "doc": "Used for storing the current favor and trust states in a relationship",
         "properties": [
           {
-            "references": "user",
-            "doc": "Id of the user who trusts"
+            "ref": "relationship",
+            "doc": "Id of the described relationship"
           },
           {
-            "name": "trustedId",
-            "references": "user",
-            "doc": "Id of the user being trusted"
+            "name": "trust",
+            "name_plural": "trustLevels",
+            "type": "enum[TrustLevel]",
+            "doc": "The level of trust in the described relationship"
           },
           {
-            "name": "trustLevel",
-            "type": "Int",
-            "doc": "The level of trust"
+            "name": "favor",
+            "name_plural": "favor",
+            "type": "int",
+            "doc": "The amount of cumulated favor in this relationship"
           },
           {
             "type": "creation"
@@ -59,25 +101,19 @@
         "doc": "Represents a recognized event where a user performs a favor to another user",
         "properties": [
           {
-            "name": "granterId",
-            "references": "user",
-            "doc": "Id of the user who acknowledges / received the favor"
-          },
-          {
-            "name": "recipientId",
-            "references": "user",
-            "doc": "Id of the user for whom the favor is granted / who performed the favor"
+            "ref": "relationship",
+            "doc": "Id of the relationship in which this even occurred"
           },
           {
             "name": "title",
             "type": "Option[String]",
-            "doc": "Title of this favor"
+            "doc": "Title of this favor event"
           },
           {
             "name": "description",
             "type": "Option[String]",
             "length": 1048,
-            "doc": "More detailed description of this favor"
+            "doc": "More detailed description of this favor event"
           },
           {
             "type": "creation",
@@ -92,24 +128,50 @@
         "doc": "Represents a codename used for a user when trust level doesn't allow use of real identities",
         "properties": [
           {
-            "name": "ownerId",
-            "references": "user",
+            "ref": "user",
             "doc": "Id of the user who uses this mask / alias"
           },
           {
             "name": "name",
+            "type": "string",
+            "length": 32,
             "doc": "Alias used as the mask"
           },
           {
-            "name": "forUserId",
-            "type": "Option[Int]",
-            "references": "user",
-            "doc": "Id of the user who sees this mask. None before used."
+            "name": "minContactTrust",
+            "name_plural": "minContactTrustLevels",
+            "type": "Option[enum[TrustLevel]]",
+            "doc": "Level of trust required for the intermediary contact user in order for this mask to be applicable"
           },
           {
-            "name": "used",
-            "type": "Option[Datetime]",
-            "doc": "Time when this mask was first used"
+            "name": "minIndirectTrust",
+            "name_plural": "minIndirectTrustLevels",
+            "type": "Option[enum[TrustLevel]]",
+            "doc": "Level of trust required from the intermediary contact user towards the unknown user in order for this mask to be applicable"
+          },
+          {
+            "type": "creation"
+          },
+          {
+            "type": "deprecation",
+            "doc": "Time after which the owner decided to stop using this mask"
+          }
+        ]
+      },
+      {
+        "name": "MaskUse",
+        "doc": "Records which masks have been used towards which people",
+        "props": [
+          {
+            "ref": "mask"
+          },
+          {
+            "name": "viewerId",
+            "ref": "user",
+            "doc": "Id of the user who sees this mask"
+          },
+          {
+            "type": "creation"
           }
         ]
       },
@@ -129,8 +191,13 @@
           },
           {
             "name": "text",
+            "name_plural": "contents",
             "length": 1048,
             "doc": "Message content"
+          },
+          {
+            "type": "expiration",
+            "doc": "Time when this message expires / should be deleted"
           },
           {
             "type": "creation",
@@ -158,6 +225,12 @@
             "doc": "Id of the user being recommended"
           },
           {
+            "name": "message",
+            "type": "string",
+            "length": 1048,
+            "doc": "Message sent along with the recommendation"
+          },
+          {
             "type": "creation",
             "doc": "Time when this recommendation was sent"
           }
@@ -168,13 +241,19 @@
         "doc": "Records the response given by the recommendation recipient",
         "properties": [
           {
-            "references": "recommendation",
+            "ref": "recommendation",
             "doc": "Id of the recommendation this response is for"
           },
           {
             "name": "newTrustLevel",
             "type": "Option[Int]",
             "doc": "Granted level of trust from the person receiving the recommendation. None if no trust was granted."
+          },
+          {
+            "name": "message",
+            "type": "string",
+            "length": 1048,
+            "doc": "Written response to the recommendation"
           },
           {
             "type": "creation"
